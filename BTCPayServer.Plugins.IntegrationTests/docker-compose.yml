@@ -17,6 +17,7 @@ services:
       - nbxplorer
       - postgres
       - xmr_wallet
+        condition: service_healthy
     extra_hosts:
       - "tests:127.0.0.1"
     volumes:
@@ -109,6 +110,15 @@ services:
       - "xmr_wallet:/wallet"
     depends_on:
       - monerod
+    healthcheck:
+      test: |
+        curl -X POST http://localhost:18082/json_rpc \
+        -H 'Content-Type: application/json' \
+        -d '{"jsonrpc":"2.0","id":"0","method":"get_version"}' || exit 1
+      interval: 1s
+      timeout: 5s
+      retries: 5
+      start_period: 2s
   
   xmr_cashcow_wallet:
     image: btcpayserver/monero:0.18.3.4
