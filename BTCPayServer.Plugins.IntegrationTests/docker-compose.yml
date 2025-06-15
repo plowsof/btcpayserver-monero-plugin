@@ -16,7 +16,7 @@ services:
     depends_on:
       - nbxplorer
       - postgres
-      - xmr_wallet
+      xmr_wallet:
         condition: service_healthy
     extra_hosts:
       - "tests:127.0.0.1"
