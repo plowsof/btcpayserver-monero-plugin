@@ -14,8 +14,10 @@ services:
       BTCPAY_XMR_DAEMON_URI: http://monerod:18081
       BTCPAY_XMR_WALLET_DAEMON_URI: http://xmr_wallet:18082
     depends_on:
-      - nbxplorer
-      - postgres
+      nbxplorer: 
+        condition: service_started
+      postgres: 
+        condition: service_started
       xmr_wallet:
         condition: service_healthy
     extra_hosts:
