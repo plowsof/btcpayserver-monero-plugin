@@ -132,12 +132,13 @@ services:
         condition: service_healthy
     entrypoint: [ "sh", "-c" ]
     command: >
+      echo "******************HELLO WORLD*********"
       curl -X POST http://xmr_wallet:18082/json_rpc
         -d '{"jsonrpc":"2.0","id":"0","method":"create_wallet","params":{"filename":"plswork","password":"","language":"English"}}'
         -H 'Content-Type: application/json' &&
 
       curl -X POST http://xmr_wallet:18082/json_rpc
-        -d '{"jsonrpc":"2.0","id":"0","method":"open_wallet","params":{"filename":"plswork","password":""}}'
+        -d '{"jsonrpc":"2.0","id":"0","method":"open_wallet","params":{"filename":"plswork","password":""}}' \
         -H 'Content-Type: application/json' &&
 
       curl -X POST http://xmr_wallet:18082/json_rpc
