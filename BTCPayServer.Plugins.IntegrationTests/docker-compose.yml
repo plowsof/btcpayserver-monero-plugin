@@ -130,23 +130,19 @@ services:
     depends_on:
       xmr_wallet:
         condition: service_healthy
-    command: |
-      sh -c "
-        # Create
-        curl -X POST http://xmr_wallet:18082/json_rpc \
-          -d '{\"jsonrpc\":\"2.0\",\"id\":\"0\",\"method\":\"create_wallet\",\"params\":{\"filename\":\"plswork\",\"password\":\"\",\"language\":\"English\"}}' \
-          -H 'Content-Type: application/json'
+    entrypoint: [ "sh", "-c" ]
+    command: >
+      curl -X POST http://xmr_wallet:18082/json_rpc
+        -d '{"jsonrpc":"2.0","id":"0","method":"create_wallet","params":{"filename":"plswork","password":"","language":"English"}}'
+        -H 'Content-Type: application/json' &&
 
-        # Open
-        curl -X POST http://xmr_wallet:18082/json_rpc \
-          -d '{\"jsonrpc\":\"2.0\",\"id\":\"0\",\"method\":\"open_wallet\",\"params\":{\"filename\":\"plswork\",\"password\":\"\"}}' \
-          -H 'Content-Type: application/json'
+      curl -X POST http://xmr_wallet:18082/json_rpc
+        -d '{"jsonrpc":"2.0","id":"0","method":"open_wallet","params":{"filename":"plswork","password":""}}'
+        -H 'Content-Type: application/json' &&
 
-        # Create account
-        curl -X POST http://xmr_wallet:18082/json_rpc \
-          -d '{\"jsonrpc\":\"2.0\",\"id\":\"0\",\"method\":\"create_account\",\"params\":{\"label\":\"test_account\"}}' \
-          -H 'Content-Type: application/json'
-       "
+      curl -X POST http://xmr_wallet:18082/json_rpc
+        -d '{"jsonrpc":"2.0","id":"0","method":"create_account","params":{"label":"test_account"}}'
+        -H 'Content-Type: application/json'
 
   xmr_cashcow_wallet:
     image: btcpayserver/monero:0.18.3.4
