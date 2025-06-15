@@ -15,7 +15,6 @@ public class MoneroPluginIntegrationTest(ITestOutputHelper helper) : MoneroAndBi
         await s.RegisterNewUser(true);
         await s.CreateNewStore();
         await s.Page.Locator("a.nav-link[href*='monerolike/XMR']").ClickAsync();
-        await s.Page.Locator("#NewAccountLabel").WaitForAsync(new() { Timeout = 999999999 }); //plssssssssssssss
         await s.Page.Locator("#NewAccountLabel").FillAsync("Wallet Label"); 
         await s.Page.CheckAsync("#Enabled");
         await s.Page.SelectOptionAsync("#SettlementConfirmationThresholdChoice", "2");
