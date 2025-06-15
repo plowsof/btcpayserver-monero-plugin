@@ -20,6 +20,8 @@ services:
         condition: service_started
       xmr_wallet:
         condition: service_healthy
+      xmr_wallet_init:
+        condition: service_completed_successfully
     extra_hosts:
       - "tests:127.0.0.1"
     volumes:
@@ -105,7 +107,7 @@ services:
     image: btcpayserver/monero:0.18.3.4
     restart: unless-stopped
     container_name: xmr_wallet
-    entrypoint: monero-wallet-rpc --log-level 2 --allow-mismatched-daemon-version --rpc-bind-ip=0.0.0.0 --disable-rpc-login --confirm-external-bind --rpc-bind-port=18082 --non-interactive --trusted-daemon --daemon-address=monerod:18081 --wallet-dir=/wallet --tx-notify="/bin/sh ./scripts/notifier.sh -k -X GET https://host.docker.internal:14142/monerolikedaemoncallback/tx?cryptoCode=xmr&hash=%s"
+    entrypoint: monero-wallet-rpc --log-level 2 --allow-mismatched-daemon-version --rpc-bind-ip=0.0.0.0 --disable-rpc-login --confirm-external-bind --rpc-bind-port=18082 --non-interactive --trusted-daemon --daemon-address=monerod:18081 --wallet-dir=/wallet --tx-notify="/bin/sh ./scripts/notifier.sh -k -X GET https://host.docker.internal:14142/monerolikedaemoncallback/tx?cryptoCode=xmr&hash=%s" --no-initial-sync
     ports:
       - "18082:18082"
     volumes:
@@ -121,6 +123,30 @@ services:
       timeout: 5s
       retries: 5
       start_period: 2s
+  
+  xmr_wallet_init:
+    image: curlimages/curl:latest
+    container_name: xmr_wallet_init
+    depends_on:
+      xmr_wallet:
+        condition: service_healthy
+    command: |
+      sh -c '
+        echo "******************HELLO WORLD*********"
+        curl -v -X POST http://xmr_wallet:18082/json_rpc \
+          -d "{\"jsonrpc\":\"2.0\",\"id\":\"0\",\"method\":\"create_wallet\",\"params\":{\"filename\":\"plswork2\",\"password\":\"\",\"language\":\"English\"}}" \
+          -H "Content-Type: application/json"
+        
+        curl -v -X POST http://xmr_wallet:18082/json_rpc \
+          -d "{\"jsonrpc\":\"2.0\",\"id\":\"0\",\"method\":\"open_wallet\",\"params\":{\"filename\":\"plswork2\",\"password\":\"\"}}" \
+          -H "Content-Type: application/json"
+        
+        curl -v -X POST http://xmr_wallet:18082/json_rpc \
+          -d "{\"jsonrpc\":\"2.0\",\"id\":\"0\",\"method\":\"create_account\",\"params\":{\"label\":\"test_account\"}}" \
+          -H "Content-Type: application/json"
+        
+        echo "SUCCESS: All operations completed!"
+      '
 
   xmr_cashcow_wallet:
     image: btcpayserver/monero:0.18.3.4
