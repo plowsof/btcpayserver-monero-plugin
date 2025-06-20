@@ -170,7 +170,7 @@ namespace BTCPayServer.Plugins.Monero.Services
             _logger.LogInformation("Mining succeed!");
         }
 
-        private static async Task CreateTestWallet(JsonRpcClient walletRpcClient)
+        public static async Task CreateTestWallet(JsonRpcClient walletRpcClient)
         {
             try
             {
