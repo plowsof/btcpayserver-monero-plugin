@@ -10,6 +10,8 @@ public class MoneroPluginIntegrationTest(ITestOutputHelper helper) : MoneroAndBi
     [Fact]
     public async Task EnableMoneroPluginSuccessfully()
     {
+        //surely not
+        await CreateWalletManually();
         await using var s = CreatePlaywrightTester();
         await s.StartAsync();
         await s.RegisterNewUser(true);

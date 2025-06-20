@@ -170,7 +170,7 @@ namespace BTCPayServer.Plugins.Monero.Services
             _logger.LogInformation("Mining succeed!");
         }
 
-        public static async Task CreateTestWallet(JsonRpcClient walletRpcClient)
+        private async Task CreateTestWallet(JsonRpcClient walletRpcClient)
         {
             try
             {
@@ -183,10 +183,14 @@ namespace BTCPayServer.Plugins.Monero.Services
                     });
                 return;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogInformation("EROR: Failed to open wallet: {Message}", ex.Message);
+                if (ex.InnerException != null)
+                {
+                    _logger.LogInformation("ERROR: Inner exception: {InnerMessage}", ex.InnerException.Message);
+                }
             }
-
             await walletRpcClient.SendCommandAsync<CreateWalletRequest, JsonRpcClient.NoRequestModel>("create_wallet",
                 new()
                 {
