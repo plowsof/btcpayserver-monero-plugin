@@ -183,14 +183,10 @@ namespace BTCPayServer.Plugins.Monero.Services
                     });
                 return;
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine("EROR: Failed to open wallet: {Message}", ex.Message);
-                if (ex.InnerException != null)
-                {
-                    Console.WriteLine("ERROR: Inner exception: {InnerMessage}", ex.InnerException.Message);
-                }
             }
+
             await walletRpcClient.SendCommandAsync<CreateWalletRequest, JsonRpcClient.NoRequestModel>("create_wallet",
                 new()
                 {

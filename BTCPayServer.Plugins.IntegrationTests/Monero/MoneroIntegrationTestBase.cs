@@ -23,7 +23,7 @@ namespace BTCPayServer.Plugins.IntegrationTests.Monero
                 Environment.SetEnvironmentVariable(key, defaultValue);
             }
         }
-        protected async Task OpenWalletMaually(string cryptoCode = "XMR")
+        protected async Task OpenWalletManually(string cryptoCode = "XMR")
         {
             using var tester = CreateServerTester();
             await tester.StartAsync();
