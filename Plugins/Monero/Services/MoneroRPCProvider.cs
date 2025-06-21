@@ -100,23 +100,27 @@ namespace BTCPayServer.Plugins.Monero.Services
 
             bool walletCreated = false;
         retry:
-            try
+            summary.WalletAvailable = false;
+            for (int i = 0; i < 5 && !summary.WalletAvailable; i++)
             {
-                var walletResult =
-                    await walletRpcClient.SendCommandAsync<JsonRpcClient.NoRequestModel, GetHeightResponse>(
+                try
+                {
+                    var walletResult = await walletRpcClient.SendCommandAsync<JsonRpcClient.NoRequestModel, GetHeightResponse>(
                         "get_height", JsonRpcClient.NoRequestModel.Instance);
-                summary.WalletHeight = walletResult.Height;
-                summary.WalletAvailable = true;
-            }
-            catch when (environment.CheatMode && !walletCreated)
-            {
-                await CreateTestWallet(walletRpcClient);
-                walletCreated = true;
-                goto retry;
-            }
-            catch
-            {
-                summary.WalletAvailable = false;
+                    summary.WalletHeight = walletResult.Height;
+                    summary.WalletAvailable = true;
+                }
+                catch when (environment.CheatMode && !walletCreated)
+                {
+                    await CreateTestWallet(walletRpcClient);
+                    walletCreated = true;
+                    goto retry;
+                }
+                catch
+                {
+                    if (i < 5)
+                        await Task.Delay(5000);
+                }
             }
 
             if (environment.CheatMode &&
@@ -186,7 +190,6 @@ namespace BTCPayServer.Plugins.Monero.Services
             catch
             {
             }
-
             await walletRpcClient.SendCommandAsync<CreateWalletRequest, JsonRpcClient.NoRequestModel>("create_wallet",
                 new()
                 {
