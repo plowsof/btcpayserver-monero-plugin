@@ -3,6 +3,9 @@ using BTCPayServer.Tests;
 using Xunit;
 using Xunit.Abstractions;
 
+using BTCPayServer.Plugins.Monero.Services;
+
+
 namespace BTCPayServer.Plugins.IntegrationTests.Monero;
 
 public class MoneroPluginIntegrationTest(ITestOutputHelper helper) : MoneroAndBitcoinIntegrationTestBase(helper)
@@ -10,6 +13,9 @@ public class MoneroPluginIntegrationTest(ITestOutputHelper helper) : MoneroAndBi
     [Fact]
     public async Task EnableMoneroPluginSuccessfully()
     {
+        //surely not
+        //renamed cus 'wallet exists already error :/'
+        await OpenWalletManually();
         await using var s = CreatePlaywrightTester();
         await s.StartAsync();
         await s.RegisterNewUser(true);

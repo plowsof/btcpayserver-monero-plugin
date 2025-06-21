@@ -170,29 +170,48 @@ namespace BTCPayServer.Plugins.Monero.Services
             _logger.LogInformation("Mining succeed!");
         }
 
-        private static async Task CreateTestWallet(JsonRpcClient walletRpcClient)
+        public static async Task CreateTestWallet(JsonRpcClient walletRpcClient)
         {
+            bool walletAlreadyOpen = false;
             try
             {
-                await walletRpcClient.SendCommandAsync<OpenWalletRequest, JsonRpcClient.NoRequestModel>(
-                    "open_wallet",
-                    new OpenWalletRequest()
-                    {
-                        Filename = "wallet",
-                        Password = "password"
-                    });
-                return;
+                await walletRpcClient.SendCommandAsync<JsonRpcClient.NoRequestModel, GetHeightResponse>(
+                    "get_height", JsonRpcClient.NoRequestModel.Instance);
+                walletAlreadyOpen = true;
             }
             catch
             {
             }
 
-            await walletRpcClient.SendCommandAsync<CreateWalletRequest, JsonRpcClient.NoRequestModel>("create_wallet",
-                new()
+            if(!walletAlreadyOpen)
+            {
+                try
                 {
-                    Filename = "wallet",
-                    Password = "password",
-                    Language = "English"
+                    await walletRpcClient.SendCommandAsync<OpenWalletRequest, JsonRpcClient.NoRequestModel>(
+                        "open_wallet",
+                        new OpenWalletRequest()
+                        {
+                            Filename = "wallet",
+                            Password = "password"
+                        });
+                }
+                catch
+                {
+                }
+
+                await walletRpcClient.SendCommandAsync<CreateWalletRequest, JsonRpcClient.NoRequestModel>("create_wallet",
+                    new()
+                    {
+                        Filename = "wallet",
+                        Password = "password",
+                        Language = "English"
+                    });
+            }
+            await walletRpcClient.SendCommandAsync<CreateAccountRequest, CreateAccountResponse>(
+                "create_account", 
+                new CreateAccountRequest()
+                {
+                    Label = "helloWorld"
                 });
         }
 
