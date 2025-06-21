@@ -30,6 +30,7 @@ namespace BTCPayServer.Plugins.IntegrationTests.Monero
             var moneroRpcProvider = tester.PayTester.GetService<MoneroRPCProvider>();
             if (moneroRpcProvider.WalletRpcClients.TryGetValue(cryptoCode.ToUpperInvariant(), out var walletClient))
             {
+                //already created, possibly open too?
                 await MoneroRPCProvider.CreateTestWallet(walletClient);
             }
         }
