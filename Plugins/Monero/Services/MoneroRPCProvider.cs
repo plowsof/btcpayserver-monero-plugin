@@ -193,6 +193,7 @@ namespace BTCPayServer.Plugins.Monero.Services
                     if (attempt < maxAttempts)
                         await Task.Delay(5000);
                 }
+                _logger.LogInformation("DEBUG** out of available while loop");
             }
             ///////////////////////////////////////////////////////////////////
 
