@@ -99,25 +99,103 @@ namespace BTCPayServer.Plugins.Monero.Services
             }
 
             bool walletCreated = false;
-        retry:
+
+            /////////////////////////////////////////////////
+            int attempt = 0;
+            const int maxAttempts = 5;
+            ////////////
+            _logger.LogInformation("Mining blocks for the ... OPEN FIRST");
+            //no wallet file. not open!~~~~~~~~~~~~!!!!!!!!!!!
             try
             {
-                var walletResult =
-                    await walletRpcClient.SendCommandAsync<JsonRpcClient.NoRequestModel, GetHeightResponse>(
-                        "get_height", JsonRpcClient.NoRequestModel.Instance);
-                summary.WalletHeight = walletResult.Height;
-                summary.WalletAvailable = true;
-            }
-            catch when (environment.CheatMode && !walletCreated)
-            {
-                await CreateTestWallet(walletRpcClient);
-                walletCreated = true;
-                goto retry;
+                await walletRpcClient.SendCommandAsync<CreateWalletRequest, JsonRpcClient.NoRequestModel>("create_wallet",
+                    new()
+                    {
+                        Filename = "wallet",
+                        Password = "password",
+                        Language = "English"
+                    });
             }
             catch
             {
-                summary.WalletAvailable = false;
+                _logger.LogInformation("**DEBUG** failed to create the wallet:/  cus **File may exist already** if file exists check?");
             }
+            try
+            {
+                await walletRpcClient.SendCommandAsync<OpenWalletRequest, JsonRpcClient.NoRequestModel>(
+                    "open_wallet",
+                    new OpenWalletRequest()
+                    {
+                        Filename = "wallet",
+                        Password = "password"
+                    });
+                walletCreated = true;
+                await walletRpcClient.SendCommandAsync<CreateAccountRequest, CreateAccountResponse>("create_account", new CreateAccountRequest()
+                    {
+                        Label = "JFC"
+                    });
+            }
+            catch
+            {
+                //rerun reeeeeeeeeeeeee
+            }
+
+            var address = (await walletRpcClient.SendCommandAsync<GetAddressRequest, GetAddressResponse>("get_address", new()
+            {
+                AccountIndex = 0
+            })).Address;
+
+            await daemonRpcClient.SendCommandAsync<GenerateBlocks, JsonRpcClient.NoRequestModel>("generateblocks", new GenerateBlocks()
+            {
+                WalletAddress = address,
+                AmountOfBlocks = 100
+            });
+            _logger.LogInformation("Mining succeed!");
+            //////////////////////////
+            while (attempt < maxAttempts && !summary.WalletAvailable)
+            {
+                _logger.LogInformation("**DEBUG** 2");
+                try
+                {
+                    _logger.LogInformation("**DEBUG** _get_height 1");
+                    var walletResult = await walletRpcClient.SendCommandAsync<JsonRpcClient.NoRequestModel, GetHeightResponse>(
+                        "get_height", JsonRpcClient.NoRequestModel.Instance);
+
+                    summary.WalletHeight = walletResult.Height;
+                    _logger.LogInformation("**DEBUG** get_info2");
+                    var daemonResult = await daemonRpcClient.SendCommandAsync<JsonRpcClient.NoRequestModel, GetInfoResponse>(
+                        "get_info", JsonRpcClient.NoRequestModel.Instance);
+
+                    summary.CurrentHeight = daemonResult.Height;
+                    summary.TargetHeight = daemonResult.TargetHeight ?? daemonResult.Height;
+                    summary.Synced = !daemonResult.BusySyncing &&
+                                     summary.WalletHeight >= summary.CurrentHeight - 1;
+
+                    summary.WalletAvailable = summary.Synced;
+                    //exit early if synced?
+
+                    _logger.LogInformation("**DEBUG** Wallet height: {WalletHeight}, Daemon height: {DaemonHeight}, Synced: {Synced}",
+                        summary.WalletHeight, summary.CurrentHeight, summary.Synced);
+                    _logger.LogInformation("Wait 10 seconds");
+                    await Task.Delay(10000); //cus we're async reeeeeeeeeeelolllllllll
+                }
+                catch when (environment.CheatMode && !walletCreated)
+                {
+                    _logger.LogInformation("**DEBUG** 3");
+                    await CreateTestWallet(walletRpcClient);
+                    walletCreated = true;
+                    continue;
+                }
+                catch
+                {
+                    _logger.LogInformation("**DEBUG** 4 RQ");
+                    attempt++;
+                    if (attempt < maxAttempts)
+                        await Task.Delay(5000);
+                }
+                _logger.LogInformation("DEBUG** out of available while loop");
+            }
+            ///////////////////////////////////////////////////////////////////
 
             if (environment.CheatMode &&
                 CashCowWalletRpcClients.TryGetValue(cryptoCode.ToUpperInvariant(), out var cashCow))
@@ -186,7 +264,6 @@ namespace BTCPayServer.Plugins.Monero.Services
             catch
             {
             }
-
             await walletRpcClient.SendCommandAsync<CreateWalletRequest, JsonRpcClient.NoRequestModel>("create_wallet",
                 new()
                 {
